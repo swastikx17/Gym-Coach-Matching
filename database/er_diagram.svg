@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+<rect width="1200" height="560" rx="24" fill="#f6f8f5"/>
+<text x="600" y="48" text-anchor="middle" font-family="Arial" font-size="25" font-weight="700" fill="#18251f">GYM COACH MATCHING SYSTEM — ER DIAGRAM</text>
+<rect x="70" y="145" width="300" height="260" rx="14" fill="#fff" stroke="#5c8150" stroke-width="3"/>
+<rect x="830" y="145" width="300" height="260" rx="14" fill="#fff" stroke="#5c8150" stroke-width="3"/>
+<rect x="470" y="195" width="260" height="160" rx="14" fill="#eaf5dc" stroke="#5c8150" stroke-width="3"/>
+<text x="220" y="180" text-anchor="middle" font-family="Arial" font-size="22" font-weight="700" fill="#18251f">COACH</text>
+<text x="980" y="180" text-anchor="middle" font-family="Arial" font-size="22" font-weight="700" fill="#18251f">MEMBER</text>
+<text x="600" y="230" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#18251f">COACH_ASSIGNMENT</text>
+<g font-family="Arial" font-size="17" fill="#35483a">
+<text x="100" y="225">PK  COACH_ID</text><text x="100" y="263">Coach_Name</text><text x="100" y="301">Specialization</text><text x="100" y="339">Experience_Years</text><text x="100" y="377">Contact_No (UNIQUE)</text>
+<text x="860" y="225">PK  CARD_NO</text><text x="860" y="263">Member_Name</text><text x="860" y="301">Fitness_Goal</text><text x="860" y="339">Phone (UNIQUE)</text><text x="860" y="377">Join_Date</text>
+<text x="495" y="275">PK, FK  CARD_NO</text><text x="495" y="308">FK  COACH_ID</text><text x="495" y="337">Assigned_On</text>
+</g>
+<path d="M370 265 L470 265" stroke="#5c8150" stroke-width="3" fill="none"/><path d="M730 265 L830 265" stroke="#5c8150" stroke-width="3" fill="none"/>
+<text x="390" y="250" font-family="Arial" font-size="16" font-weight="700" fill="#5c8150">1</text><text x="445" y="250" font-family="Arial" font-size="16" font-weight="700" fill="#5c8150">N</text>
+<text x="745" y="250" font-family="Arial" font-size="16" font-weight="700" fill="#5c8150">0..1</text><text x="790" y="250" font-family="Arial" font-size="16" font-weight="700" fill="#5c8150">1</text>
+<text x="600" y="430" text-anchor="middle" font-family="Arial" font-size="16" fill="#536057">One coach → many assignment rows; each member has zero or one current assignment.</text>
+<text x="600" y="462" text-anchor="middle" font-family="Arial" font-size="15" fill="#758078">Assignment CARD_NO is PK + FK; COACH_ID is FK and may repeat.</text>
+<text x="600" y="520" text-anchor="middle" font-family="Arial" font-size="14" fill="#758078">Student: Swastik Satyam · Registration No. 25BCB0039</text>
+</svg>

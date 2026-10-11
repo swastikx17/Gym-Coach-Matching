@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b18">
+  <title>Gym Coach Matching | Admin Dashboard & Live Database Monitor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Gym Coach home">
+        <span class="brand-mark">GC</span><span><strong>GYM COACH</strong><small>MATCHING SYSTEM</small></span>
+      </a>
+
+      <!-- ROLE SELECTOR IN SIDEBAR -->
+      <div class="portal-role-box">
+        <div class="role-selector-label">ACTIVE PORTAL ROLE</div>
+        <div class="role-toggle-group">
+          <button class="role-btn active" id="role-admin-btn">👑 Admin</button>
+          <button class="role-btn" id="role-user-btn">🏃 Member</button>
+        </div>
+      </div>
+
+      <div class="side-label">ADMIN WORKSPACE</div>
+      <nav class="nav" id="sidebar-nav">
+        <button class="nav-link active" data-view="dashboard"><span>▦</span> Dashboard</button>
+        <button class="nav-link" data-view="members"><span>♙</span> Members</button>
+        <button class="nav-link" data-view="coaches"><span>✦</span> Coaches</button>
+        <button class="nav-link" data-view="assignments"><span>⇄</span> Assignments</button>
+        
+        <!-- ADMIN ONLY: LIVE DATABASE FEED -->
+        <button class="nav-link admin-live-nav-link" data-view="admin-live-db">
+          <span style="color:#ef4444;">🔴</span> Live Database (Admin)
+          <span id="admin-live-badge" class="sql-badge live-pulse-badge">0</span>
+        </button>
+
+        <!-- USER SELF-SERVICE PORTAL -->
+        <button class="nav-link user-portal-nav-link" data-view="user-portal">
+          <span>👤</span> User Portal (Update)
+        </button>
+
+        <!-- SQL LIVE MONITOR -->
+        <button class="nav-link sql-nav-link" data-view="sql-console">
+          <span>⚡</span> SQL Live Monitor 
+          <span id="sql-badge" class="sql-badge">0</span>
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="status-dot"></div><span id="db-status">Checking Oracle connection…</span>
+        <div class="student"><span class="avatar">SS</span><span><strong>Swastik Satyam</strong><small>25BCB0039 · Student</small></span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow"><span id="role-breadcrumb-badge" class="role-pill">ADMIN MODE</span> FITNESS OPERATIONS / <span id="crumb">OVERVIEW</span></p>
+          <h1 id="page-title">Dashboard overview</h1>
+        </div>
+        <div class="top-actions">
+          <button class="role-switch-header-btn" id="header-switch-role-btn">
+            Switch to Member Portal ➔
+          </button>
+          <div class="sql-quick-pill" id="sql-quick-pill" title="Click to view live SQL queries">
+            <span class="pulse-dot"></span>
+            <span id="top-sql-text">Oracle XE: Connected</span>
+          </div>
+          <span class="date-pill" id="today"></span>
+          <button class="btn btn-primary" id="quick-add">＋ Add member</button>
+        </div>
+      </header>
+      
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="dashboard-view" class="view">
+        <div class="welcome">
+          <div>
+            <p class="eyebrow light">YOUR TRAINING FLOOR, AT A GLANCE</p>
+            <h2>Better coaching starts<br>with the right connection.</h2>
+            <p>Real-time relational DBMS synchronization with Oracle Database, live user update audits & query logging.</p>
+          </div>
+          <div class="welcome-icon">↗</div>
+        </div>
+        <div class="stat-grid">
+          <article class="stat-card"><div class="stat-top"><span>Total members</span><span class="stat-icon green">♙</span></div><strong id="stat-members">—</strong><small>Registered gym members</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Certified coaches</span><span class="stat-icon blue">✦</span></div><strong id="stat-coaches">—</strong><small>Available coaching profiles</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Assigned members</span><span class="stat-icon orange">⇄</span></div><strong id="stat-assigned">—</strong><small>Active coach relationships</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Unassigned</span><span class="stat-icon purple">○</span></div><strong id="stat-unassigned">—</strong><small>Need a coach match</small></article>
+        </div>
+        <div class="content-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">ROSTER</p><h3>Recent members</h3></div>
+              <button class="text-btn" data-go="members">View all →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>MEMBER</th><th>FITNESS GOAL</th><th>COACH</th><th>STATUS</th></tr></thead>
+                <tbody id="recent-members"></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="panel coach-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">TEAM</p><h3>Coach capacity</h3></div>
+              <button class="text-btn" data-go="coaches">View all →</button>
+            </div>
+            <div id="coach-capacity" class="capacity-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 2. MEMBERS VIEW -->
+      <section id="members-view" class="view" hidden>
+        <div class="section-toolbar">
+          <div><h2>Member directory</h2><p>Manage member profiles and their fitness goals in Oracle SQL.</p></div>
+          <button class="btn btn-primary" id="add-member-btn">＋ New member</button>
+        </div>
+        <div class="filterbar">
+          <label class="searchbox"><span>⌕</span><input id="member-search" placeholder="Search card, name, goal or coach…"></label>
+          <select id="goal-filter">
+            <option value="">All fitness goals</option>
+            <option>Weight Loss</option>
+            <option>Muscle Gain</option>
+            <option>Strength Training</option>
+            <option>General Fitness</option>
+            <option>Endurance</option>
+            <option>Fat Loss</option>
+            <option>Flexibility</option>
+            <option>Cardio Fitness</option>
+          </select>
+          <select id="member-coach-filter"><option value="">All coaches</option></select>
+        </div>
+        <article class="panel">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>CARD NO.</th><th>MEMBER</th><th>FITNESS GOAL</th><th>ASSIGNED COACH</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+              <tbody id="members-table"></tbody>
+            </table>
+          </div>
+          <div class="table-footer" id="members-count"></div>
+        </article>
+      </section>
+
+      <!-- 3. COACHES VIEW -->
+      <section id="coaches-view" class="view" hidden>
+        <div class="section-toolbar">
+          <div><h2>Coach directory</h2><p>Certified instructors and their member capacity stored in COACH table.</p></div>
+          <button class="btn btn-primary" id="add-coach-btn">＋ New coach</button>
+        </div>
+        <div class="filterbar">
+          <label class="searchbox"><span>⌕</span><input id="coach-search" placeholder="Search coach ID, name or specialty…"></label>
+        </div>
+        <div class="coach-grid" id="coaches-grid"></div>
+      </section>
+
+      <!-- 4. ASSIGNMENTS VIEW -->
+      <section id="assignments-view" class="view" hidden>
+        <div class="section-toolbar">
+          <div><h2>Coach assignments</h2><p>Primary & Foreign key constraint enforcement: 1 member to at most 1 coach.</p></div>
+        </div>
+        <article class="panel assignment-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">MATCHING DESK</p><h3>Create a coach match</h3></div>
+            <span class="mini-tag">Oracle-backed</span>
+          </div>
+          <form id="assignment-form" class="inline-form">
+            <label>Member<select id="assignment-member" required><option value="">Select member</option></select></label>
+            <label>Coach<select id="assignment-coach" required><option value="">Select coach</option></select></label>
+            <button class="btn btn-primary" type="submit">Assign coach</button>
+          </form>
+        </article>
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">CURRENT MATCHES</p><h3>Assignment register</h3></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>MEMBER</th><th>FITNESS GOAL</th><th>COACH</th><th>ASSIGNED ON</th><th>ACTIONS</th></tr></thead>
+              <tbody id="assignments-table"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- 5. ADMIN ONLY: LIVE DATABASE AUDIT VIEW -->
+      <section id="admin-live-db-view" class="view" hidden>
+        <div class="admin-banner">
+          <div class="admin-banner-content">
+            <span class="admin-shield-icon">🛡️</span>
+            <div>
+              <div class="admin-pill-tag">ADMIN ONLY ACCESS</div>
+              <h2>Live Database Audit Stream</h2>
+              <p>Real-time feed showing updated data submitted by gym members/users with timestamps, old vs new values, and verified Oracle SQL executions.</p>
+            </div>
+          </div>
+          <div class="admin-live-status">
+            <span class="live-sync-pulse"></span>
+            <span>Live Sync Active (auto-updates every 3s)</span>
+          </div>
+        </div>
+
+        <!-- Live DB Summary Stats -->
+        <div class="stat-grid" style="margin-bottom: 20px;">
+          <article class="stat-card">
+            <div class="stat-top"><span>Total User Updates</span><span class="stat-icon red">🔴</span></div>
+            <strong id="live-total-user-updates">0</strong>
+            <small>Audited profile modifications</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Last User Update</span><span class="stat-icon green">⏱</span></div>
+            <strong id="live-last-update-time" style="font-size:15px; margin: 18px 0 6px;">No updates yet</strong>
+            <small id="live-last-update-relative">Awaiting user activity</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Audited Table</span><span class="stat-icon blue">☷</span></div>
+            <strong style="font-size:18px; margin: 15px 0 6px;">AUDIT_USER_UPDATES</strong>
+            <small>Oracle Relational Table</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Database Target</span><span class="stat-icon purple">🖴</span></div>
+            <strong id="live-engine-target" style="font-size:16px; margin: 16px 0 6px;">Oracle XE (11g)</strong>
+            <small>Live Transaction Committed</small>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">AUDIT TRAIL</p>
+              <h3>Live Member Modifications Feed</h3>
+            </div>
+            <div class="action-group">
+              <button class="btn btn-secondary" id="refresh-live-db-btn">⟳ Refresh Stream</button>
+              <button class="btn btn-secondary" id="clear-live-db-btn">Clear Audit History</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>TIMESTAMP (DATE & TIME)</th>
+                  <th>MEMBER / USER</th>
+                  <th>FIELD MODIFIED</th>
+                  <th>PREVIOUS VALUE ➔ UPDATED VALUE</th>
+                  <th>SQL STATEMENT EXECUTED</th>
+                  <th>DB STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="live-user-updates-tbody">
+                <tr><td colspan="6" class="empty-state">No user updates recorded yet. Go to 'User Portal' to update a member profile and watch it appear here live!</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer" id="live-updates-count-footer">0 live audit log entries recorded</div>
+        </article>
+      </section>
+
+      <!-- 6. USER PORTAL: MEMBER SELF-SERVICE UPDATE -->
+      <section id="user-portal-view" class="view" hidden>
+        <div class="user-portal-header">
+          <div class="user-portal-intro">
+            <div class="user-pill-tag">MEMBER SELF-SERVICE</div>
+            <h2>Update Your Gym Profile</h2>
+            <p>Gym members can update their fitness goal, phone number, and personal details. Every change updates the database immediately and notifies the Admin in the Live Database.</p>
+          </div>
+          <div class="user-account-select-box">
+            <label for="portal-member-select">Select Your Member Profile:</label>
+            <select id="portal-member-select" class="portal-member-select">
+              <option value="">-- Choose Member Profile --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="user-portal-grid">
+          <!-- Member Digital ID Card -->
+          <article class="panel member-id-card">
+            <div class="id-card-top">
+              <span class="id-badge">GYM MEMBERSHIP CARD</span>
+              <span id="portal-card-status" class="status-pill assigned">ACTIVE</span>
+            </div>
+            <div class="id-card-body">
+              <div class="id-avatar" id="portal-card-avatar">SS</div>
+              <div>
+                <h3 id="portal-card-name">Select a member above</h3>
+                <span class="id-card-number" id="portal-card-number">CARD NO: —</span>
+              </div>
+            </div>
+            <div class="id-card-details">
+              <div><span>Current Fitness Goal</span><strong id="portal-card-goal">—</strong></div>
+              <div><span>Phone Number</span><strong id="portal-card-phone">—</strong></div>
+              <div><span>Assigned Coach</span><strong id="portal-card-coach">—</strong></div>
+              <div><span>Membership Since</span><strong id="portal-card-joined">—</strong></div>
+            </div>
+          </article>
+
+          <!-- Member Edit Form -->
+          <article class="panel user-edit-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">UPDATE DETAILS</p>
+                <h3>Edit Profile Information</h3>
+              </div>
+              <span class="mini-tag">Direct SQL Write</span>
+            </div>
+            <form id="user-profile-form" class="user-edit-form">
+              <label>
+                Full Name
+                <input id="user-edit-name" required placeholder="Your full name">
+              </label>
+
+              <label>
+                Fitness Goal
+                <select id="user-edit-goal" required>
+                  <option value="">Select your target goal</option>
+                  <option>Weight Loss</option>
+                  <option>Muscle Gain</option>
+                  <option>Strength Training</option>
+                  <option>General Fitness</option>
+                  <option>Endurance</option>
+                  <option>Fat Loss</option>
+                  <option>Flexibility</option>
+                  <option>Cardio Fitness</option>
+                </select>
+              </label>
+
+              <label>
+                Phone Number
+                <input id="user-edit-phone" placeholder="e.g. 9100001001">
+              </label>
+
+              <button class="btn btn-primary" type="submit" id="save-user-profile-btn" style="width:100%;padding:14px;font-size:13px;margin-top:6px;">
+                💾 Save & Update My Profile in Database
+              </button>
+            </form>
+
+            <div id="user-update-success-box" class="user-update-success-box" hidden>
+              <div class="success-top">
+                <span>✔ Profile Successfully Updated in SQL Database!</span>
+                <span id="user-update-timestamp" style="font-size:10px;color:#708876;"></span>
+              </div>
+              <code id="user-update-sql-code" class="user-update-sql-code"></code>
+              <div class="success-actions">
+                <button class="btn btn-secondary" id="btn-goto-admin-live" style="font-size:11px;">
+                  👑 Switch to Admin View to see this in Live Database ➔
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 7. SQL LIVE MONITOR VIEW -->
+      <section id="sql-console-view" class="view" hidden>
+        <div class="section-toolbar">
+          <div>
+            <h2>Live SQL Monitor & Console</h2>
+            <p>Inspect real-time SQL statements executed against Oracle Database XE and run custom DBMS queries.</p>
+          </div>
+          <div class="action-group">
+            <button class="btn btn-secondary" id="refresh-sql-btn">⟳ Refresh logs</button>
+            <button class="btn btn-secondary" id="clear-sql-btn">Clear logs</button>
+          </div>
+        </div>
+
+        <!-- SQL Stats Overview -->
+        <div class="stat-grid sql-stat-grid">
+          <article class="stat-card">
+            <div class="stat-top"><span>Database Engine</span><span class="stat-icon green">🖴</span></div>
+            <strong id="sql-engine-name" style="font-size:16px; margin: 16px 0 6px;">Oracle 11g XE</strong>
+            <small id="sql-engine-sub">Live 64-bit ODBC connection</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Total Queries Run</span><span class="stat-icon blue">⚡</span></div>
+            <strong id="sql-total-queries">0</strong>
+            <small>Session query counter</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>DML Changes (Write)</span><span class="stat-icon orange">✎</span></div>
+            <strong id="sql-total-writes">0</strong>
+            <small>INSERT / UPDATE / DELETE</small>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Active SQL Tables</span><span class="stat-icon purple">☷</span></div>
+            <strong id="sql-total-tables">4</strong>
+            <small>COACH, MEMBER, ASSIGNMENT, AUDIT</small>
+          </article>
+        </div>
+
+        <!-- SQL Tabs Header -->
+        <div class="sql-tab-nav">
+          <button class="sql-tab-btn active" data-sqltab="playground">▶ Interactive SQL Playground</button>
+          <button class="sql-tab-btn" data-sqltab="activity">⏱ Live SQL Activity Stream (<span id="sql-log-count">0</span>)</button>
+          <button class="sql-tab-btn" data-sqltab="tables">☷ Live Table Inspector</button>
+        </div>
+
+        <!-- TAB 1: INTERACTIVE SQL PLAYGROUND -->
+        <div id="sqltab-playground" class="sql-tab-content">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">QUERY RUNNER</p>
+                <h3>Execute SQL Statement on Live Database</h3>
+              </div>
+              <div class="preset-wrap">
+                <label for="sql-preset-select" style="font-size:11px;font-weight:700;color:#6d7a71;margin-right:8px;">Load Preset:</label>
+                <select id="sql-preset-select" class="preset-select">
+                  <option value="">-- Select DBMS Course Query --</option>
+                  <option value="SELECT * FROM MEMBER ORDER BY CARD_NO">1. Display all members (SELECT *)</option>
+                  <option value="SELECT * FROM COACH ORDER BY COACH_ID">2. Display all coaches (SELECT *)</option>
+                  <option value="SELECT * FROM AUDIT_USER_UPDATES ORDER BY UPDATED_AT DESC">Audit: Live user update logs</option>
+                  <option value="SELECT m.CARD_NO, m.MEMBER_NAME, m.FITNESS_GOAL, a.COACH_ID, c.COACH_NAME FROM MEMBER m LEFT JOIN COACH_ASSIGNMENT a ON a.CARD_NO = m.CARD_NO LEFT JOIN COACH c ON c.COACH_ID = a.COACH_ID ORDER BY m.CARD_NO">3. Join: Members with assigned coaches</option>
+                  <option value="SELECT c.COACH_ID, c.COACH_NAME, COUNT(a.CARD_NO) AS MEMBER_COUNT FROM COACH c LEFT JOIN COACH_ASSIGNMENT a ON a.COACH_ID=c.COACH_ID GROUP BY c.COACH_ID, c.COACH_NAME ORDER BY MEMBER_COUNT DESC">5. Member count per coach (GROUP BY & COUNT)</option>
+                  <option value="SELECT m.CARD_NO, m.MEMBER_NAME, m.FITNESS_GOAL FROM MEMBER m LEFT JOIN COACH_ASSIGNMENT a ON a.CARD_NO=m.CARD_NO WHERE a.CARD_NO IS NULL">8. Unassigned members (IS NULL)</option>
+                  <option value="SELECT COACH_ID, COUNT(*) AS MEMBER_COUNT FROM COACH_ASSIGNMENT GROUP BY COACH_ID HAVING COUNT(*) > 1">16. Coaches with > 1 member (HAVING)</option>
+                  <option value="SELECT CARD_NO, MEMBER_NAME FROM MEMBER WHERE CARD_NO IN (SELECT a.CARD_NO FROM COACH_ASSIGNMENT a WHERE a.COACH_ID IN (SELECT COACH_ID FROM COACH WHERE COACH_NAME LIKE 'Rahul%'))">17. Nested Subquery (Members of Rahul)</option>
+                  <option value="SELECT m.CARD_NO, m.MEMBER_NAME, m.FITNESS_GOAL, c.COACH_NAME, c.SPECIALIZATION, a.ASSIGNED_ON FROM MEMBER m JOIN COACH_ASSIGNMENT a ON a.CARD_NO=m.CARD_NO JOIN COACH c ON c.COACH_ID=a.COACH_ID ORDER BY c.COACH_ID, m.CARD_NO">18. Full 3-Table Join View</option>
+                </select>
+              </div>
+            </div>
+            <div class="sql-editor-box">
+              <textarea id="sql-query-input" rows="4" spellcheck="false" placeholder="Type any valid SQL query here (e.g. SELECT * FROM MEMBER;)">SELECT * FROM AUDIT_USER_UPDATES ORDER BY UPDATED_AT DESC</textarea>
+              <div class="sql-editor-actions">
+                <span id="query-meta-msg" class="query-meta-msg">Press 'Run SQL' to execute directly against the database</span>
+                <button class="btn btn-primary" id="run-sql-btn">▶ Run SQL Statement</button>
+              </div>
+            </div>
+            <div id="query-result-panel" class="query-result-panel" hidden>
+              <div class="query-result-header">
+                <strong id="result-stat-text">Query Results</strong>
+                <span id="result-time-pill" class="result-time-pill">0 ms</span>
+              </div>
+              <div class="table-wrap">
+                <table id="custom-query-table">
+                  <thead id="custom-query-thead"></thead>
+                  <tbody id="custom-query-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- TAB 2: LIVE SQL ACTIVITY STREAM -->
+        <div id="sqltab-activity" class="sql-tab-content" hidden>
+          <div class="filterbar" style="margin-bottom: 12px;">
+            <div class="action-group">
+              <button class="action-btn active" data-filter="all">All SQL Statements</button>
+              <button class="action-btn" data-filter="changes">Changes Only (INSERT/UPDATE/DELETE)</button>
+              <button class="action-btn" data-filter="reads">Queries Only (SELECT)</button>
+            </div>
+          </div>
+          <div id="sql-activity-list" class="sql-activity-list"></div>
+        </div>
+
+        <!-- TAB 3: LIVE TABLES INSPECTOR -->
+        <div id="sqltab-tables" class="sql-tab-content" hidden>
+          <div class="tables-inspector-grid" id="tables-inspector-grid"></div>
+        </div>
+      </section>
+
+      <footer>GYM COACH MATCHING SYSTEM <span>·</span> DBMS FULL-STACK PROJECT <span>·</span> 25BCB0039</footer>
+    </main>
+  </div>
+
+  <!-- FLOATING LIVE SQL STATUS BAR DOCKED AT SCREEN BOTTOM -->
+  <aside id="sql-live-dock" class="sql-live-dock">
+    <div class="dock-badge">
+      <span class="pulse-dot"></span>
+      <span class="dock-title">LIVE SQL</span>
+    </div>
+    <div class="dock-content" id="dock-content">
+      <span class="dock-op" id="dock-op">READY</span>
+      <code class="dock-code" id="dock-code">Database listening on localhost:1521/XE</code>
+      <span class="dock-meta" id="dock-meta">—</span>
+    </div>
+    <div class="dock-actions">
+      <button class="dock-btn" id="dock-view-logs" title="Open SQL Monitor">View Console ↗</button>
+    </div>
+  </aside>
+
+  <!-- MODALS -->
+  <dialog id="member-dialog" class="modal">
+    <form id="member-form">
+      <div class="modal-heading">
+        <div><p class="eyebrow">MEMBER PROFILE</p><h2 id="member-modal-title">Add member</h2></div>
+        <button type="button" class="icon-btn" data-close="member-dialog">×</button>
+      </div>
+      <input type="hidden" id="member-mode" value="create">
+      <label>Card number<input id="member-card" maxlength="20" required placeholder="e.g. GC1011"></label>
+      <label>Member name<input id="member-name" maxlength="100" required placeholder="Full name"></label>
+      <label>Fitness goal
+        <select id="member-goal" required>
+          <option value="">Select goal</option>
+          <option>Weight Loss</option>
+          <option>Muscle Gain</option>
+          <option>Strength Training</option>
+          <option>General Fitness</option>
+          <option>Endurance</option>
+          <option>Fat Loss</option>
+          <option>Flexibility</option>
+          <option>Cardio Fitness</option>
+        </select>
+      </label>
+      <label>Phone (optional)<input id="member-phone" maxlength="20" placeholder="Contact number"></label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close="member-dialog">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save member</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="coach-dialog" class="modal">
+    <form id="coach-form">
+      <div class="modal-heading">
+        <div><p class="eyebrow">COACH PROFILE</p><h2 id="coach-modal-title">Add coach</h2></div>
+        <button type="button" class="icon-btn" data-close="coach-dialog">×</button>
+      </div>
+      <input type="hidden" id="coach-mode" value="create">
+      <label>Coach ID<input id="coach-id" type="number" min="1" max="999999" required placeholder="e.g. 106"></label>
+      <label>Coach name<input id="coach-name" maxlength="100" required placeholder="Full name"></label>
+      <label>Specialization<input id="coach-specialization" maxlength="80" placeholder="e.g. Strength Training"></label>
+      <label>Years of experience<input id="coach-experience" type="number" min="0" max="60" value="0" required></label>
+      <label>Contact number<input id="coach-contact" maxlength="20" placeholder="Contact number"></label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close="coach-dialog">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save coach</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
